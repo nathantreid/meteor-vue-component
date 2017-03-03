@@ -251,6 +251,7 @@ VueComponentTagHandler = class VueComponentTagHandler {
       for (let styleTag of this.component.styles) {
         let css = styleTag.contents;
         let cssMap = null;
+        let tagCssModules;
 
         // Lang
         let lang = styleTag.attribs.lang || 'css';
@@ -273,10 +274,18 @@ VueComponentTagHandler = class VueComponentTagHandler {
               source: css,
               inputFile: this.inputFile,
               dependencyManager: this.dependencyManager,
+              tag: styleTag,
             });
             // console.log('Css result', result);
             css = result.css;
             cssMap = result.map;
+            tagCssModules = result.cssModules;
+            if (tagCssModules) {
+              cssModules = { ...(cssModules || {}), ...tagCssModules };
+            }
+            if (result.js) {
+              js += result.js;
+            }
           }
         } catch (e) {
           throwCompileError({
@@ -311,7 +320,7 @@ VueComponentTagHandler = class VueComponentTagHandler {
 
         // CSS Modules
         let isAsync = false;
-        if (styleTag.attribs.module) {
+        if (styleTag.attribs.module && tagCssModules === undefined) {
           const moduleName = typeof styleTag.attribs.module === 'string' ? styleTag.attribs.module : '';
           const scopedModuleName = moduleName ? `_${moduleName}` : '';
           plugins.push(postcssModules({
