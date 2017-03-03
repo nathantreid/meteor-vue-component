@@ -253,11 +253,11 @@ VueComponentTagHandler = class VueComponentTagHandler {
         let cssMap = null;
 
         // Lang
-        if (styleTag.attribs.lang !== undefined && styleTag.attribs.lang !== 'css') {
-          let lang = styleTag.attribs.lang;
-          try {
-            let compile = global.vue.lang[lang];
-            if (!compile) {
+        let lang = styleTag.attribs.lang || 'css';
+        try {
+          let compile = global.vue.lang[lang];
+          if (!compile) {
+            if (lang !== 'css') {
               throwCompileError({
                 inputFile: this.inputFile,
                 tag: 'style',
@@ -266,28 +266,28 @@ VueComponentTagHandler = class VueComponentTagHandler {
                 lang,
                 message: `Can't find handler for lang ${lang}, did you install it?`,
               });
-            } else {
-              //console.log(`Compiling <style> in lang ${lang}...`);
-              let result = compile({
-                source: css,
-                inputFile: this.inputFile,
-                dependencyManager: this.dependencyManager
-              });
-              //console.log('Css result', result);
-              css = result.css;
-              cssMap = result.map;
             }
-          } catch (e) {
-            throwCompileError({
+          } else {
+            //console.log(`Compiling <style> in lang ${lang}...`);
+            let result = compile({
+              source: css,
               inputFile: this.inputFile,
-              tag: 'style',
-              charIndex: styleTag.tagStartIndex,
-              action: 'compiling',
-              lang,
-              error: e,
-              showError: true
+              dependencyManager: this.dependencyManager,
             });
+            // console.log('Css result', result);
+            css = result.css;
+            cssMap = result.map;
           }
+        } catch (e) {
+          throwCompileError({
+            inputFile: this.inputFile,
+            tag: 'style',
+            charIndex: styleTag.tagStartIndex,
+            action: 'compiling',
+            lang,
+            error: e,
+            showError: true
+          });
         }
 
         // Postcss
