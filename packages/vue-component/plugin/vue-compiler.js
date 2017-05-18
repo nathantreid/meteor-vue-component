@@ -154,10 +154,19 @@ VueComponentCompiler = class VueCompo extends CachingCompiler {
     const { js, templateHash } = generateJs(vueId, inputFile, compileResult)
 
     // Add JS Source file
+    let path = inputFile.getPathInPackage();
+    if (inputFile.getArch().indexOf('os') === 0 && inputFile.getPathInPackage().indexOf('node_modules') !== -1) {
+      path += '.js';
+    }
+    
+    let sourceMap = inputFile.getPathInPackage().indexOf('node_modules') === -1
+      ? compileResult.map
+      : undefined;
+
     inputFile.addJavaScript({
-      path: inputFile.getPathInPackage(),
+      path,
       data: js,
-      sourceMap: compileResult.map,
+      sourceMap,
       lazy: false,
     });
 
@@ -647,7 +656,8 @@ function generateJs (vueId, inputFile, compileResult, isHotReload = false) {
 
     // Auto default name
     js += `\n__vue_options__.name = __vue_options__.name || '${name}';`
-    let isOutsideImports = inputFilePath.split('/').indexOf('imports') === -1;
+    const splitPath = inputFilePath.split('/');
+    let isOutsideImports = splitPath.indexOf('imports') === -1 && splitPath.indexOf('node_modules') === -1;
     if (isOutsideImports || isGlobalName) {
       // Component registration
       js += `\nvar _Vue = require('vue');
