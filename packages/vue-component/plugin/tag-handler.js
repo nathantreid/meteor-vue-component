@@ -60,33 +60,24 @@ VueComponentTagHandler = class VueComponentTagHandler {
     }
 
     if (tag.attribs.src) {
-      if (tag.contents.trim()) {
-        throwCompileError({
-          inputFile: this.inputFile,
-          message: `Should not have any contents if using the 'src' attribute.`,
-          tag: tag.tagName,
-          charIndex: tag.tagStartIndex,
-        })
-      } else {
-        const filePath = path.resolve(path.dirname(getFilePath(this.inputFile)), tag.attribs.src)
-        try {
-          tag.origin = Object.assign({}, tag)
-          tag.basePath = filePath
-          tag.contents = tag.fileContents = getFileContents(filePath)
-          tag.sourceName = filePath
-          tag.tagStartIndex = 0
-          this.dependencyManager.addDependency(filePath)
-        } catch (e) {
-          if (e.message === 'file-not-found') {
-            throwCompileError({
-              inputFile: this.inputFile,
-              message: `File ${filePath} not found.`,
-              tag: tag.tagName,
-              charIndex: tag.tagStartIndex,
-            })
-          } else {
-            throw e
-          }
+      const filePath = path.resolve(path.dirname(getFilePath(this.inputFile)), tag.attribs.src)
+      try {
+        tag.origin = Object.assign({}, tag)
+        tag.basePath = filePath
+        tag.contents = tag.fileContents = getFileContents(filePath)
+        tag.sourceName = filePath
+        tag.tagStartIndex = 0
+        this.dependencyManager.addDependency(filePath)
+      } catch (e) {
+        if (e.message === 'file-not-found') {
+          throwCompileError({
+            inputFile: this.inputFile,
+            message: `File ${filePath} not found.`,
+            tag: tag.tagName,
+            charIndex: tag.tagStartIndex,
+          })
+        } else {
+          throw e
         }
       }
     } else {
