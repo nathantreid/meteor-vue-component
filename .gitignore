@@ -1,1 +1,4 @@
 node_modules/
+.idea/
+packages/vue-component/.versions
+packages/vue-component-dev-client/.versions
