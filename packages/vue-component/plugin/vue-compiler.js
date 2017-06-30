@@ -147,28 +147,7 @@ VueComponentCompiler = class VueCompo extends CachingCompiler {
     const vueId = compileResult.hash;
     const isDev = isDevelopment();
 
-    let jsHash = Hash(compileResult.code);
-
-    //console.log(`js hash: ${jsHash}`);
-
-    const { js, templateHash } = generateJs(vueId, inputFile, compileResult)
-
-    // Add JS Source file
-    let path = inputFile.getPathInPackage();
-    if (inputFile.getArch().indexOf('os') === 0 && inputFile.getPathInPackage().indexOf('node_modules') !== -1) {
-      path += '.js';
-    }
-    
-    let sourceMap = inputFile.getPathInPackage().indexOf('node_modules') === -1
-      ? compileResult.map
-      : undefined;
-
-    inputFile.addJavaScript({
-      path,
-      data: js,
-      sourceMap,
-      lazy: false,
-    });
+    const isLazy = !!inputFilePath.match(/(^|\/)(node_modules|imports)\//);
 
     // Style
     let css = '';
@@ -185,12 +164,44 @@ VueComponentCompiler = class VueCompo extends CachingCompiler {
       if (isDev) {
         // Add style to client first-connection style list
         global._dev_server.__addStyle({ hash: vueId, css, path: inputFilePath }, false);
-      } else {
+      } else if(!isLazy) {
         this.addStylesheet(inputFile, {
-          data: css
+          data: css,
+          // lazy: isLazy,
         });
       }
     }
+
+    // JavaScript
+    let jsHash = Hash(compileResult.code);
+
+    //console.log(`js hash: ${jsHash}`);
+
+    const { js, templateHash } = generateJs(vueId, inputFile, compileResult)
+
+    // Add JS Source file
+    let path = inputFile.getPathInPackage();
+    if (inputFile.getArch().indexOf('os') === 0 && inputFilePath.indexOf('node_modules') !== -1) {
+      path += '.js';
+    }
+
+    const sourceMap = inputFilePath.indexOf('node_modules') === -1
+      ? compileResult.map
+      : undefined;
+
+    let jsWithStyles;
+    if (isLazy) {
+      jsWithStyles = `
+      const modules = require('meteor/modules');
+      modules.addStyles(${JSON.stringify(css)});
+      ` + js;
+    }
+    inputFile.addJavaScript({
+      path,
+      data: jsWithStyles || js,
+      sourceMap,
+      lazy: isLazy,
+    });
 
     if (isDev) {
       cache = Cache.getCache(inputFile);
