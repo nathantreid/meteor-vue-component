@@ -355,17 +355,12 @@ VueComponentTagHandler = class VueComponentTagHandler {
                 inputFile: this.inputFile,
                 dependencyManager: this.dependencyManager,
                 tag: styleTag,
+                cssModules,
               });
               // console.log('Css result', result);
               css = result.css;
               cssMap = result.map;
-              if (result.cssModules) {
-                const moduleName = typeof styleTag.attribs.module === 'string' ? styleTag.attribs.module : defaultModuleName;
-                if (cssModules === undefined) {
-                  cssModules = {};
-                }
-                cssModules[moduleName] = { ...(cssModules[moduleName] || {}), ...result.cssModules };
-              }
+              cssModules = result.cssModules;
               if (result.js) {
                 js += result.js;
               }
@@ -409,6 +404,9 @@ VueComponentTagHandler = class VueComponentTagHandler {
         let result;
         if (isAsync) {
           result = Promise.await(postcss(plugins).process(css, postcssOptions));
+          if (cssModules && !global.vue.cssModules) {
+            cssModules = JSON.stringify(cssModules);
+          }
         } else {
           result = postcss(plugins).process(css, postcssOptions);
         }
