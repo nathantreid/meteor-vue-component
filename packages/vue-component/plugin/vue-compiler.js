@@ -161,7 +161,7 @@ VueComponentCompiler = class VueCompo extends CachingCompiler {
 
       //console.log(`css hash: ${cssHash}`);
 
-      if (isDev) {
+      if (isDev && false) {
         // Add style to client first-connection style list
         global._dev_server.__addStyle({ hash: vueId, css, path: inputFilePath }, false);
       } else if(!isLazy) {
